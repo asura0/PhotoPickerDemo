@@ -64,6 +64,9 @@ static CGFloat rectHeight = 180;
 
     pinchGesture.view.transform = CGAffineTransformScale(pinchGesture.view.transform, pinchGesture.scale, pinchGesture.scale);
     //确保不能放大过大或过小
+    //2D 矩阵:ad缩放bc旋转tx,ty位移
+    //规则:x=ax+cy+tx
+    //    y=bx+dy+ty
     if (pinchGesture.view.transform.a > 1.5) {
         CGAffineTransform transform = pinchGesture.view.transform;
         transform.a = 1.5;
@@ -80,7 +83,7 @@ static CGFloat rectHeight = 180;
 }
 
 - (void)sureSelectedImage:(UIButton *)sender{
-    UIImage *image = [self private_captureImageFromView:_tailorImageView];
+    UIImage *image = [self private_captureImageFromView:self.view];
     _tailoredImage ? _tailoredImage(image) : nil;
     [self dismissViewControllerAnimated:YES completion:nil];
 }
@@ -163,21 +166,35 @@ static CGFloat rectHeight = 180;
     });
 }
 
-- (UIImage *)private_captureImageFromView:(UIView *)view
-{
-    CGRect screenRect = CGRectMake(0, 0, rectWidth, rectHeight);
-    UIGraphicsBeginImageContext(screenRect.size);
+- (UIImage *)private_captureImageFromView:(UIView *)view{
+    CGRect screenRect = CGRectMake((self.view.frame.size.width - rectWidth) / 2,
+                                   (self.view.frame.size.height - rectHeight) / 2,
+                                   rectWidth,
+                                   rectHeight);
+    UIGraphicsBeginImageContextWithOptions(screenRect.size, NO, [UIScreen mainScreen].scale);
     
-    CGContextRef ctx = UIGraphicsGetCurrentContext();
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    if (context == NULL){
+        return nil;
+    }
+    //copy 一份图形上下位文,用来操作
+    CGContextSaveGState(context);
+    //将当前图行位文进行矩阵变换
+    CGContextTranslateCTM(context, -screenRect.origin.x, -screenRect.origin.y);
     
-    [view.layer renderInContext:ctx];
-    
-    UIImage * image = UIGraphicsGetImageFromCurrentImageContext();
-    
+    if( [view respondsToSelector:@selector(drawViewHierarchyInRect:afterScreenUpdates:)]){
+        //捕捉当前快照
+        [view drawViewHierarchyInRect:view.bounds afterScreenUpdates:NO];
+    }else{
+        //layer 层渲染
+        [view.layer renderInContext:context];
+    }
+    //图形位文退出栈
+    CGContextRestoreGState(context);
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     
     return image;
-    
 }
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
