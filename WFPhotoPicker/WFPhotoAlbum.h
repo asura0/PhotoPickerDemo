@@ -15,6 +15,9 @@
  */
 @property (nonatomic, assign) BOOL isShowGroups;
 
+
++ (WFPhotoAlbum *)standarWFPhotosAlbum;
+
 /**
  *  获取图片方法
  *

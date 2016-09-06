@@ -40,6 +40,9 @@ typedef void(^WFPhotoAlbumFailure)(NSError *error);
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         _photosAlbum = [[self alloc] init];
+        _photosAlbum.albums = [NSMutableArray array];
+        _photosAlbum.fullPhotos = [NSMutableArray array];
+        _photosAlbum.thumbnails = [NSMutableArray array];
     });
     return _photosAlbum;
 }
@@ -51,10 +54,10 @@ typedef void(^WFPhotoAlbumFailure)(NSError *error);
 }
 
 - (void)wf_GetPhotos{
-    _albums = [NSMutableArray array];
-    _fullPhotos = [NSMutableArray array];
-    _thumbnails = [NSMutableArray array];
-
+    if (_fullPhotos.count != 0 && _thumbnails.count != 0) {
+        _success ? _success(_albums,_fullPhotos,_thumbnails) : nil;
+        return;
+    }
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         if (IPHONE_IOS <= 8.0) {
             [self wf_GetPhotosBefore];

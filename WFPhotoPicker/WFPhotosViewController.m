@@ -36,7 +36,7 @@ static NSString *const indentifier = @"CELL";
     self.navigationItem.title = @"相片";
     [self private_confguireCollectionView];
     
-    WFPhotoAlbum *photoAlbum = [[WFPhotoAlbum alloc] init];
+    WFPhotoAlbum *photoAlbum = [WFPhotoAlbum standarWFPhotosAlbum];
     [photoAlbum getPhotosSuccess:^(NSMutableArray *groupPhotos, NSMutableArray *fullPhotos, NSMutableArray *thumbnails) {
         
         self.datasource = [thumbnails copy];
