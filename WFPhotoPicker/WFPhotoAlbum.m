@@ -40,9 +40,6 @@ typedef void(^WFPhotoAlbumFailure)(NSError *error);
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         _photosAlbum = [[self alloc] init];
-        _photosAlbum.albums = [NSMutableArray array];
-        _photosAlbum.fullPhotos = [NSMutableArray array];
-        _photosAlbum.thumbnails = [NSMutableArray array];
     });
     return _photosAlbum;
 }
@@ -54,10 +51,9 @@ typedef void(^WFPhotoAlbumFailure)(NSError *error);
 }
 
 - (void)wf_GetPhotos{
-    if (_fullPhotos.count != 0 && _thumbnails.count != 0) {
-        _success ? _success(_albums,_fullPhotos,_thumbnails) : nil;
-        return;
-    }
+    _albums = [NSMutableArray array];
+    _fullPhotos = [NSMutableArray array];
+    _thumbnails = [NSMutableArray array];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         if (IPHONE_IOS <= 8.0) {
             [self wf_GetPhotosBefore];
@@ -104,6 +100,13 @@ typedef void(^WFPhotoAlbumFailure)(NSError *error);
                 }
             }else{
                 //没有相册列表资源,输出提示
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [PopView initWithTitle:@"提示" content:@"没有相册资源" buttonTitle:@[@"知道了!"] success:^{
+                        
+                    } failure:^{
+                        
+                    }];
+                });
             }
             dispatch_async(dispatch_get_main_queue(), ^{
                 _success ? _success(_albums,_fullPhotos,_thumbnails) : nil;
@@ -138,30 +141,11 @@ typedef void(^WFPhotoAlbumFailure)(NSError *error);
         
         // 获取所有资源的集合
         PHFetchResult *assetsFetchResults = [PHAsset fetchAssetsWithOptions:nil];
-        PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
-        //异步
-        requestOptions.synchronous = YES;
-        //速度和质量均衡//synchronous ture 时有效
-        requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeOpportunistic;
-        //尽快提供要求左右的尺寸图
-        requestOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
-        // 在资源的集合中 获取第一个集合，并获取其中的图片
-        PHCachingImageManager *imageManager = [[PHCachingImageManager alloc] init];
+       
         [assetsFetchResults enumerateObjectsUsingBlock:^(PHAsset  *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            //缩略图
-            [imageManager requestImageForAsset:obj
-                                    targetSize:CGSizeMake(125, 125)
-                                   contentMode:PHImageContentModeDefault
-                                       options:requestOptions
-                                 resultHandler:^(UIImage *result, NSDictionary *info) {
-                                     
-                                     // 此处的result缩略图示为宽高不一致的图片
-                                     [_thumbnails addObject:[self wf_thumbnailsCutfullPhoto:result]];
-                                 }];
-            //原图
-            [imageManager requestImageDataForAsset:obj options:requestOptions resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
-                [_fullPhotos addObject:imageData];
-            }];
+            [_thumbnails addObject:obj];
+            [_fullPhotos addObject:obj];
+            
             if (_fullPhotos.count == assetsFetchResults.count && _thumbnails.count == assetsFetchResults.count) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     _success ? _success(_albums,_fullPhotos,_thumbnails) : nil;
@@ -171,25 +155,6 @@ typedef void(^WFPhotoAlbumFailure)(NSError *error);
         }];
     }
 }
-
-//裁剪图片,此处裁剪为125*125大的图,即为我们的缩略图
-- (UIImage *)wf_thumbnailsCutfullPhoto:(UIImage*)fullPhoto
-{
-    CGSize newSize;
-    CGImageRef imageRef = nil;
-    if ((fullPhoto.size.width / fullPhoto.size.height) < 1) {
-         newSize.width = fullPhoto.size.width;
-         newSize.height = fullPhoto.size.width * 1;
-         imageRef = CGImageCreateWithImageInRect([fullPhoto CGImage], CGRectMake(0, fabs(fullPhoto.size.height - newSize.height) / 2, newSize.width, newSize.height));
-
-     } else {
-         newSize.height = fullPhoto.size.height;
-         newSize.width = fullPhoto.size.height * 1;
-         imageRef = CGImageCreateWithImageInRect([fullPhoto CGImage], CGRectMake(fabs(fullPhoto.size.width - newSize.width) / 2, 0, newSize.width, newSize.height));
-
-     }
-     return [UIImage imageWithCGImage:imageRef];
- }
 
 - (void)wf_alerPhotos{
     NSDictionary *mainInfoDictionary = [[NSBundle mainBundle] infoDictionary];

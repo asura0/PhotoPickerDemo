@@ -7,16 +7,16 @@
 //
 
 #import "WFTailoringViewController.h"
+#import <Photos/Photos.h>
 
 static CGFloat rectWidth = 300;
 static CGFloat rectHeight = 180;
 
 @interface WFTailoringViewController ()
-
+//原图imageView
 @property (nonatomic, strong) UIImageView *tailorImageView;
-
+//image
 @property (nonatomic, strong) UIImage *showImage;
-
 
 @end
 
@@ -156,13 +156,34 @@ static CGFloat rectHeight = 180;
 
 - (void)private_showImage{
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        _showImage = [UIImage imageWithData:_imageData];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            CGFloat height  = _tailorImageView.frame.size.width * _showImage.size.height / _showImage.size.width;
-            _tailorImageView.frame = CGRectMake(0, 0, _tailorImageView.frame.size.width, height);
-            _tailorImageView.center = self.view.center;
-            _tailorImageView.image = _showImage;
-        });
+        if ([_imageData isKindOfClass:[NSData class]]) {
+            _showImage = [UIImage imageWithData:_imageData];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                CGFloat height  = _tailorImageView.frame.size.width * _showImage.size.height / _showImage.size.width;
+                _tailorImageView.frame = CGRectMake(0, 0, _tailorImageView.frame.size.width, height);
+                _tailorImageView.center = self.view.center;
+                _tailorImageView.image = _showImage;
+            });
+        }else if ([_imageData isKindOfClass:[PHAsset class]]){
+            PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
+            //异步
+            requestOptions.synchronous = YES;
+            //速度和质量均衡//synchronous ture 时有效
+            requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeOpportunistic;
+            //尽快提供要求左右的尺寸图
+            requestOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
+            // 在资源的集合中 获取第一个集合，并获取其中的图片
+            PHCachingImageManager *imageManager = [[PHCachingImageManager alloc] init];
+            //原图
+            [imageManager requestImageForAsset:_imageData targetSize:PHImageManagerMaximumSize contentMode:PHImageContentModeDefault options:requestOptions resultHandler:^(UIImage * _Nullable result, NSDictionary * _Nullable info) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    CGFloat height  = _tailorImageView.frame.size.width * result.size.height / result.size.width;
+                    _tailorImageView.frame = CGRectMake(0, 0, _tailorImageView.frame.size.width, height);
+                    _tailorImageView.center = self.view.center;
+                    _tailorImageView.image = result;
+                });
+            }];
+        }
     });
 }
 

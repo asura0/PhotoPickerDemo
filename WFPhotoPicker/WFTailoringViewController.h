@@ -12,8 +12,8 @@ typedef void(^WFTailoringViewControllerTailoredImageBlock)(UIImage *imgae);
 
 @interface WFTailoringViewController : UIViewController
 
-/** 传入的 data */
-@property (nonatomic, strong) NSData *imageData;
+/** 传入的 id */
+@property (nonatomic, strong) id imageData;
 
 @property (nonatomic, copy) WFTailoringViewControllerTailoredImageBlock tailoredImage;
 

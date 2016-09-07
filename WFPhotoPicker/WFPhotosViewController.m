@@ -11,6 +11,7 @@
 #import "WFTailoringViewController.h"
 #import "WFPhotoAlbum.h"
 #import "PopView.h"
+#import <Photos/Photos.h>
 
 static NSString *const indentifier = @"CELL";
 
@@ -18,10 +19,14 @@ static NSString *const indentifier = @"CELL";
 
 @property (nonatomic, strong) UICollectionView *collectionView;
 
+//资源的集合
+@property (nonatomic, strong) PHCachingImageManager *imageManager;
+
 @property (nonatomic, strong) NSMutableArray *datasource;
 
 @property (nonatomic, strong) NSMutableArray *fullPhotos;
 
+@property (nonatomic, strong) NSMutableArray *thumbnails;
 
 @end
 
@@ -39,13 +44,38 @@ static NSString *const indentifier = @"CELL";
     WFPhotoAlbum *photoAlbum = [WFPhotoAlbum standarWFPhotosAlbum];
     [photoAlbum getPhotosSuccess:^(NSMutableArray *groupPhotos, NSMutableArray *fullPhotos, NSMutableArray *thumbnails) {
         
-        self.datasource = [thumbnails copy];
+        self.thumbnails = [thumbnails copy];
         self.fullPhotos = [fullPhotos copy];
         [_collectionView reloadData];
-        
+        // 在资源的集合
+        _imageManager = [[PHCachingImageManager alloc] init];
+        //缓存操作
+        [_imageManager startCachingImagesForAssets:self.thumbnails
+                                            targetSize:PHImageManagerMaximumSize
+                                           contentMode:PHImageContentModeAspectFill
+                                               options:nil];
     } failure:^(NSError *error) {
         NSLog(@"error:%@",error);
     }];
+}
+
+//裁剪图片,此处裁剪为125*125大的图,即为我们的缩略图
+- (UIImage *)wf_thumbnailsCutfullPhoto:(UIImage*)fullPhoto
+{
+    CGSize newSize;
+    CGImageRef imageRef = nil;
+    if ((fullPhoto.size.width / fullPhoto.size.height) < 1) {
+        newSize.width = fullPhoto.size.width;
+        newSize.height = fullPhoto.size.width * 1;
+        imageRef = CGImageCreateWithImageInRect([fullPhoto CGImage], CGRectMake(0, fabs(fullPhoto.size.height - newSize.height) / 2, newSize.width, newSize.height));
+        
+    } else {
+        newSize.height = fullPhoto.size.height;
+        newSize.width = fullPhoto.size.height * 1;
+        imageRef = CGImageCreateWithImageInRect([fullPhoto CGImage], CGRectMake(fabs(fullPhoto.size.width - newSize.width) / 2, 0, newSize.width, newSize.height));
+        
+    }
+    return [UIImage imageWithCGImage:imageRef];
 }
 
 #pragma mark - event reponse -
@@ -79,14 +109,40 @@ static NSString *const indentifier = @"CELL";
 #pragma mark - UICollectionViewDelegate -
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
-    return self.datasource.count;
+    return self.thumbnails.count;
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
-    UIImage *image = self.datasource[indexPath.item];
+    id obj = self.thumbnails[indexPath.item];
     WFCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:indentifier forIndexPath:indexPath];
     cell.contentView.backgroundColor = [UIColor orangeColor];
-    cell.imageView.image = image;
+    if ([obj isKindOfClass:[UIImage class]]) {
+        cell.imageView.image = obj;
+    }else if ([obj isKindOfClass:[PHAsset class]]){
+
+        PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
+        //异步
+        requestOptions.synchronous = YES;
+        //速度和质量均衡//synchronous ture 时有效
+        requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeOpportunistic;
+        //尽快提供要求左右的尺寸图
+        requestOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
+        // 遍历资源的集合,获取其中的图片
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            [_imageManager requestImageForAsset:obj
+                                    targetSize:CGSizeMake(125 * [UIScreen mainScreen].scale,
+                                                          125 * [UIScreen mainScreen].scale)
+                                   contentMode:PHImageContentModeDefault
+                                       options:requestOptions
+                                 resultHandler:^(UIImage *result, NSDictionary *info) {
+                                     dispatch_async(dispatch_get_main_queue(), ^{
+                                         cell.imageView.image = [self wf_thumbnailsCutfullPhoto:result];
+                                     });
+                                     
+                                 }];
+        });
+    }
+    
     return cell;
 }
 
@@ -112,6 +168,13 @@ static NSString *const indentifier = @"CELL";
         _fullPhotos = [NSMutableArray array];
     }
     return _fullPhotos;
+}
+
+- (NSMutableArray *)thumbnails{
+    if (_thumbnails == nil) {
+        _thumbnails = [NSMutableArray array];
+    }
+    return _thumbnails;
 }
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
