@@ -25,7 +25,7 @@
  *  @param failure 失败回调(error)
  */
 - (void)getPhotosSuccess:(void (^)(NSMutableArray *groupPhotos,
-                                   NSMutableArray <NSString *> *fullPhotos,
-                                   NSMutableArray <NSData *> *thumbnails))success
+                                   NSMutableArray *fullPhotos,
+                                   NSMutableArray *thumbnails))success
                  failure:(void (^)(NSError *error))failure;
 @end

@@ -44,10 +44,11 @@ typedef void(^WFPhotoAlbumFailure)(NSError *error);
     return _photosAlbum;
 }
 
-- (void)getPhotosSuccess:(void (^)(NSMutableArray *, NSMutableArray<NSString *> *, NSMutableArray<NSData *> *))success failure:(void (^)(NSError *))failure{
+- (void)getPhotosSuccess:(void (^)(NSMutableArray *, NSMutableArray *, NSMutableArray *))success failure:(void (^)(NSError *))failure{
     _success = [success copy];
     _failure = [failure copy];
     [self wf_GetPhotos];
+    
 }
 
 - (void)wf_GetPhotos{
@@ -56,14 +57,14 @@ typedef void(^WFPhotoAlbumFailure)(NSError *error);
     _thumbnails = [NSMutableArray array];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         if (IPHONE_IOS <= 8.0) {
-            [self wf_GetPhotosBefore];
+            [self wf_getPhotosBefore];
         }else{
             [self wf_getPhotosLater];
         }
     });
 }
 
-- (void)wf_GetPhotosBefore{
+- (void)wf_getPhotosBefore{
     //获取当前应用对相册的访问授权状态
     ALAuthorizationStatus authorizationState = [ALAssetsLibrary authorizationStatus];
     // 如果没有获取访问授权，或者访问授权状态已经被明确禁止，则显示提示语，引导用户开启授权
@@ -125,34 +126,37 @@ typedef void(^WFPhotoAlbumFailure)(NSError *error);
 - (void)wf_getPhotosLater{
     //权限
     PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
-    if (status != PHAuthorizationStatusAuthorized) {
+    if (status == PHAuthorizationStatusDenied || status == PHAuthorizationStatusRestricted) {
         [self wf_alerPhotos];
     }else{
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [PopView initWithWaitingString:@"加载中..."];
-        });
-        if (_isShowGroups) {
-            // 列出所有相册列表
-            PHFetchResult *smartAlbums = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeAlbumRegular options:nil];
-            [smartAlbums enumerateObjectsUsingBlock:^(PHCollection  *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                [_albums addObject:obj.localizedTitle];
-            }];
-        }
-        
-        // 获取所有资源的集合
-        PHFetchResult *assetsFetchResults = [PHAsset fetchAssetsWithOptions:nil];
-       
-        [assetsFetchResults enumerateObjectsUsingBlock:^(PHAsset  *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            [_thumbnails addObject:obj];
-            [_fullPhotos addObject:obj];
-            
-            if (_fullPhotos.count == assetsFetchResults.count && _thumbnails.count == assetsFetchResults.count) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    _success ? _success(_albums,_fullPhotos,_thumbnails) : nil;
-                    [PopView dissmissPopview];
-                });
-            }
-        }];
+       [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+           if (status == PHAuthorizationStatusAuthorized) {
+               dispatch_async(dispatch_get_main_queue(), ^{
+                   [PopView initWithWaitingString:@"加载中..."];
+               });
+               if (_isShowGroups) {
+                   // 列出所有相册列表
+                   PHFetchResult *smartAlbums = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeAlbumRegular options:nil];
+                   [smartAlbums enumerateObjectsUsingBlock:^(PHCollection  *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                       [_albums addObject:obj.localizedTitle];
+                   }];
+               }
+               // 获取所有资源的集合
+               PHFetchResult *assetsFetchResults = [PHAsset fetchAssetsWithOptions:nil];
+               
+               [assetsFetchResults enumerateObjectsUsingBlock:^(PHAsset  *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                   [_thumbnails addObject:obj];
+                   [_fullPhotos addObject:obj];
+                   
+                   if (_fullPhotos.count == assetsFetchResults.count && _thumbnails.count == assetsFetchResults.count) {
+                       dispatch_async(dispatch_get_main_queue(), ^{
+                           _success ? _success(_albums,_fullPhotos,_thumbnails) : nil;
+                           [PopView dissmissPopview];
+                       });
+                   }
+               }];
+           }
+       }];
     }
 }
 

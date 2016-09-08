@@ -33,6 +33,8 @@ static CGFloat rectHeight = 180;
     
     popShareView.handleShareBlock = ^ (UIButton *sender){
         if (sender.tag == 100) {
+            UIImageWriteToSavedPhotosAlbum([[UIImage alloc] init], nil, nil, nil);
+            
             WFPhotosViewController *photosVC = [[WFPhotosViewController alloc] init];
             UINavigationController *naviVC = [[UINavigationController alloc] initWithRootViewController:photosVC];
             photosVC.tailoredImage = ^ (UIImage *image){

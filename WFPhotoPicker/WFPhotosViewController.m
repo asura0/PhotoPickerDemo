@@ -22,8 +22,6 @@ static NSString *const indentifier = @"CELL";
 //资源的集合
 @property (nonatomic, strong) PHCachingImageManager *imageManager;
 
-@property (nonatomic, strong) NSMutableArray *datasource;
-
 @property (nonatomic, strong) NSMutableArray *fullPhotos;
 
 @property (nonatomic, strong) NSMutableArray *thumbnails;
@@ -47,35 +45,18 @@ static NSString *const indentifier = @"CELL";
         self.thumbnails = [thumbnails copy];
         self.fullPhotos = [fullPhotos copy];
         [_collectionView reloadData];
-        // 在资源的集合
-        _imageManager = [[PHCachingImageManager alloc] init];
-        //缓存操作
-        [_imageManager startCachingImagesForAssets:self.thumbnails
+        if ([self.thumbnails.firstObject isKindOfClass:[PHAsset class]]) {
+            // 在资源的集合
+            _imageManager = [[PHCachingImageManager alloc] init];
+            //缓存操作
+            [_imageManager startCachingImagesForAssets:self.thumbnails
                                             targetSize:PHImageManagerMaximumSize
                                            contentMode:PHImageContentModeAspectFill
                                                options:nil];
+        }
     } failure:^(NSError *error) {
         NSLog(@"error:%@",error);
     }];
-}
-
-//裁剪图片,此处裁剪为125*125大的图,即为我们的缩略图
-- (UIImage *)wf_thumbnailsCutfullPhoto:(UIImage*)fullPhoto
-{
-    CGSize newSize;
-    CGImageRef imageRef = nil;
-    if ((fullPhoto.size.width / fullPhoto.size.height) < 1) {
-        newSize.width = fullPhoto.size.width;
-        newSize.height = fullPhoto.size.width * 1;
-        imageRef = CGImageCreateWithImageInRect([fullPhoto CGImage], CGRectMake(0, fabs(fullPhoto.size.height - newSize.height) / 2, newSize.width, newSize.height));
-        
-    } else {
-        newSize.height = fullPhoto.size.height;
-        newSize.width = fullPhoto.size.height * 1;
-        imageRef = CGImageCreateWithImageInRect([fullPhoto CGImage], CGRectMake(fabs(fullPhoto.size.width - newSize.width) / 2, 0, newSize.width, newSize.height));
-        
-    }
-    return [UIImage imageWithCGImage:imageRef];
 }
 
 #pragma mark - event reponse -
@@ -104,6 +85,26 @@ static NSString *const indentifier = @"CELL";
     _collectionView.dataSource = self;
     [self.view addSubview:_collectionView];
     [_collectionView registerClass:[WFCollectionViewCell class] forCellWithReuseIdentifier:indentifier];
+}
+
+
+//裁剪图片,此处裁剪为125*125大的图,即为我们的缩略图
+- (UIImage *)wf_thumbnailsCutfullPhoto:(UIImage*)fullPhoto
+{
+    CGSize newSize;
+    CGImageRef imageRef = nil;
+    if ((fullPhoto.size.width / fullPhoto.size.height) < 1) {
+        newSize.width = fullPhoto.size.width;
+        newSize.height = fullPhoto.size.width * 1;
+        imageRef = CGImageCreateWithImageInRect([fullPhoto CGImage], CGRectMake(0, fabs(fullPhoto.size.height - newSize.height) / 2, newSize.width, newSize.height));
+        
+    } else {
+        newSize.height = fullPhoto.size.height;
+        newSize.width = fullPhoto.size.height * 1;
+        imageRef = CGImageCreateWithImageInRect([fullPhoto CGImage], CGRectMake(fabs(fullPhoto.size.width - newSize.width) / 2, 0, newSize.width, newSize.height));
+        
+    }
+    return [UIImage imageWithCGImage:imageRef];
 }
 
 #pragma mark - UICollectionViewDelegate -
@@ -156,12 +157,6 @@ static NSString *const indentifier = @"CELL";
 }
 
 #pragma mark - setters and getters -
-- (NSMutableArray *)datasource{
-    if (_datasource == nil) {
-        _datasource = [NSMutableArray array];
-    }
-    return _datasource;
-}
 
 - (NSMutableArray *)fullPhotos{
     if (_fullPhotos == nil) {
