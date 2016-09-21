@@ -7,6 +7,8 @@
 //
 
 #import "WFCollectionViewCell.h"
+#import "WFPhotoAlbum.h"
+
 
 @implementation WFCollectionViewCell
 
@@ -17,6 +19,14 @@
         [self.contentView addSubview:_imageView];
     }
     return self;
+}
+
+- (void (^)(WFAlumbModel *))assignment{
+    return ^ (WFAlumbModel *model){
+        [[WFPhotoAlbum standarWFPhotosAlbum] getPhotosWithAsset:model.asset originalImage:NO completion:^(UIImage *image) {
+            _imageView.image = image;
+        }];
+    };
 }
 
 @end

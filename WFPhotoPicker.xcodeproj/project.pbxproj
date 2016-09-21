@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9351697E1D87E9F100C6E7EB /* WFCacheModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 9351697D1D87E9F100C6E7EB /* WFCacheModel.m */; };
 		9374F6431D795C0D0072A89F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 9374F6421D795C0D0072A89F /* main.m */; };
 		9374F6461D795C0D0072A89F /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 9374F6451D795C0D0072A89F /* AppDelegate.m */; };
 		9374F6491D795C0D0072A89F /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9374F6481D795C0D0072A89F /* ViewController.m */; };
@@ -44,6 +45,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		9351697C1D87E9F100C6E7EB /* WFCacheModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WFCacheModel.h; sourceTree = "<group>"; };
+		9351697D1D87E9F100C6E7EB /* WFCacheModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WFCacheModel.m; sourceTree = "<group>"; };
 		9374F63E1D795C0D0072A89F /* WFPhotoPicker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WFPhotoPicker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9374F6421D795C0D0072A89F /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		9374F6441D795C0D0072A89F /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -142,6 +145,8 @@
 				9A706C6E1D7C56660024C7E4 /* WFPhotoAlbum.m */,
 				9393AACA1D7D244E0049A2D3 /* WFCollectionViewCell.h */,
 				9393AACB1D7D244E0049A2D3 /* WFCollectionViewCell.m */,
+				9351697C1D87E9F100C6E7EB /* WFCacheModel.h */,
+				9351697D1D87E9F100C6E7EB /* WFCacheModel.m */,
 				9374F64A1D795C0D0072A89F /* Main.storyboard */,
 				9374F64D1D795C0D0072A89F /* Assets.xcassets */,
 				9374F64F1D795C0D0072A89F /* LaunchScreen.storyboard */,
@@ -344,6 +349,7 @@
 				93883D3B1D7EAE7B00B6D014 /* WBSPopShareView.m in Sources */,
 				93883D3F1D7EB32700B6D014 /* UIButton+BBTButton.m in Sources */,
 				9374F6791D7979DC0072A89F /* WFPhotosViewController.m in Sources */,
+				9351697E1D87E9F100C6E7EB /* WFCacheModel.m in Sources */,
 				9374F6761D795F490072A89F /* WFTailoringViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -489,7 +495,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEVELOPMENT_TEAM = MPY63RGHHM;
 				INFOPLIST_FILE = WFPhotoPicker/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = www.asura.WFPhotoPicker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -503,7 +511,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEVELOPMENT_TEAM = MPY63RGHHM;
 				INFOPLIST_FILE = WFPhotoPicker/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = www.asura.WFPhotoPicker;
 				PRODUCT_NAME = "$(TARGET_NAME)";

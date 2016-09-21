@@ -7,10 +7,12 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "WFCacheModel.h"
 
 @interface WFCollectionViewCell : UICollectionViewCell
 
 @property (nonatomic, strong) UIImageView *imageView;
 
+- (void (^)(WFAlumbModel *))assignment;
 
 @end

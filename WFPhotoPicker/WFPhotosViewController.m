@@ -12,6 +12,7 @@
 #import "WFPhotoAlbum.h"
 #import "PopView.h"
 #import <Photos/Photos.h>
+#import "WFCacheModel.h"
 
 static NSString *const indentifier = @"CELL";
 
@@ -20,11 +21,8 @@ static NSString *const indentifier = @"CELL";
 @property (nonatomic, strong) UICollectionView *collectionView;
 
 //资源的集合
-@property (nonatomic, strong) PHCachingImageManager *imageManager;
+@property (nonatomic, strong) NSMutableArray *photos;
 
-@property (nonatomic, strong) NSMutableArray *fullPhotos;
-
-@property (nonatomic, strong) NSMutableArray *thumbnails;
 
 @end
 
@@ -34,29 +32,15 @@ static NSString *const indentifier = @"CELL";
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
-    
     self.automaticallyAdjustsScrollViewInsets = NO;
     self.navigationItem.title = @"相片";
     [self private_confguireCollectionView];
     
-    WFPhotoAlbum *photoAlbum = [WFPhotoAlbum standarWFPhotosAlbum];
-    [photoAlbum getPhotosSuccess:^(NSMutableArray *groupPhotos, NSMutableArray *fullPhotos, NSMutableArray *thumbnails) {
-        
-        self.thumbnails = [thumbnails copy];
-        self.fullPhotos = [fullPhotos copy];
-        [_collectionView reloadData];
-        if ([self.thumbnails.firstObject isKindOfClass:[PHAsset class]]) {
-            // 在资源的集合
-            _imageManager = [[PHCachingImageManager alloc] init];
-            //缓存操作
-            [_imageManager startCachingImagesForAssets:self.thumbnails
-                                            targetSize:PHImageManagerMaximumSize
-                                           contentMode:PHImageContentModeAspectFill
-                                               options:nil];
-        }
-    } failure:^(NSError *error) {
-        NSLog(@"error:%@",error);
+    [[WFPhotoAlbum standarWFPhotosAlbum] getCameraSuccess:^(WFCacheModel *model) {
+         self.photos = [model.models copy];
+         [_collectionView reloadData];
     }];
+    
 }
 
 #pragma mark - event reponse -
@@ -110,46 +94,21 @@ static NSString *const indentifier = @"CELL";
 #pragma mark - UICollectionViewDelegate -
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
-    return self.thumbnails.count;
+    return self.photos.count;
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
-    id obj = self.thumbnails[indexPath.item];
     WFCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:indentifier forIndexPath:indexPath];
     cell.contentView.backgroundColor = [UIColor orangeColor];
-    if ([obj isKindOfClass:[UIImage class]]) {
-        cell.imageView.image = obj;
-    }else if ([obj isKindOfClass:[PHAsset class]]){
 
-        PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
-        //异步
-        requestOptions.synchronous = YES;
-        //速度和质量均衡//synchronous ture 时有效
-        requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeOpportunistic;
-        //尽快提供要求左右的尺寸图
-        requestOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
-        // 遍历资源的集合,获取其中的图片
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            [_imageManager requestImageForAsset:obj
-                                    targetSize:CGSizeMake(125 * [UIScreen mainScreen].scale,
-                                                          125 * [UIScreen mainScreen].scale)
-                                   contentMode:PHImageContentModeDefault
-                                       options:requestOptions
-                                 resultHandler:^(UIImage *result, NSDictionary *info) {
-                                     dispatch_async(dispatch_get_main_queue(), ^{
-                                         cell.imageView.image = [self wf_thumbnailsCutfullPhoto:result];
-                                     });
-                                     
-                                 }];
-        });
-    }
-    
+    cell.assignment(self.photos[indexPath.item]);
     return cell;
 }
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
     WFTailoringViewController *tailoringVC = [[WFTailoringViewController alloc] init];
-    tailoringVC.imageData = _fullPhotos[indexPath.item];
+    WFAlumbModel *model = self.photos[indexPath.item];
+    tailoringVC.asset = model.asset;
     tailoringVC.tailoredImage = ^ (UIImage *image){
         _tailoredImage ? _tailoredImage(image) : nil;
     };
@@ -158,18 +117,11 @@ static NSString *const indentifier = @"CELL";
 
 #pragma mark - setters and getters -
 
-- (NSMutableArray *)fullPhotos{
-    if (_fullPhotos == nil) {
-        _fullPhotos = [NSMutableArray array];
+- (NSMutableArray *)photos{
+    if (_photos == nil) {
+        _photos = [NSMutableArray array];
     }
-    return _fullPhotos;
-}
-
-- (NSMutableArray *)thumbnails{
-    if (_thumbnails == nil) {
-        _thumbnails = [NSMutableArray array];
-    }
-    return _thumbnails;
+    return _photos;
 }
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];

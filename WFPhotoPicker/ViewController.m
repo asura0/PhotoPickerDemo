@@ -23,7 +23,6 @@ static CGFloat rectHeight = 180;
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
-    
 }
 
 #pragma mark - event reponse -
@@ -85,7 +84,9 @@ static CGFloat rectHeight = 180;
 
         imageRef = CGImageCreateWithImageInRect([image CGImage], CGRectMake(fabs(image.size.width - newSize.width) / 2, 0, newSize.width, newSize.height));
     }
-     return [UIImage imageWithCGImage:imageRef];
+    UIImage *img = [UIImage imageWithCGImage:imageRef];
+    CGImageRelease(imageRef);
+     return img;
 }
 
 #pragma mark - UIImagePickerControllerDelegate -
