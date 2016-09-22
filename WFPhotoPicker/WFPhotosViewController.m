@@ -88,7 +88,9 @@ static NSString *const indentifier = @"CELL";
         imageRef = CGImageCreateWithImageInRect([fullPhoto CGImage], CGRectMake(fabs(fullPhoto.size.width - newSize.width) / 2, 0, newSize.width, newSize.height));
         
     }
-    return [UIImage imageWithCGImage:imageRef];
+    UIImage *image = [UIImage imageWithCGImage:imageRef];
+    CGImageRelease(imageRef);
+    return image;
 }
 
 #pragma mark - UICollectionViewDelegate -
